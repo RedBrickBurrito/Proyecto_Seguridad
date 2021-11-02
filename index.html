@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&display=swap" rel="stylesheet">
+    <title>Chatsito</title>
+    <style>
+    
+        body {
+            background: rgb(43, 43, 43);
+        }
+
+        .image{
+            background-image: url("https://i.imgur.com/Mlng72g.jpeg");
+            background-size:cover;
+            background-repeat: no-repeat;
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            bottom: 0px;
+            left: 0px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            font-size: large;
+            position: absolute;
+            background: white;
+            width: 350px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            border-radius: 15px;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .modal-content {
+            font-family: "Open Sans";
+            margin-left: 5%;
+        }
+
+        .connectBtn {
+            padding: 5px 5px 5px 5px;
+            margin-top: 8%;
+            font-size: medium;
+            float: right;
+            margin-right: 13%;
+            border-radius: 15px;
+            border: none;
+            background-color: #cc0e0e;
+            color:azure;
+            box-shadow: 0 8px 16px 0 rgba(124, 38, 38, 0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        #sendMessageBtn {
+            border: none;
+            padding: 5px 5px 5px 5px;
+            font-family: 'Open Sans';
+            font-size: larger;
+            border-radius: 20px;
+            position: sticky;
+            float: right;
+            transform: scale(1.2);
+            background-color: #cc0e0e;
+            color:azure;
+            width: 10%;
+            right: 2%;
+            box-shadow: 0 8px 16px 0 rgba(124, 38, 38, 0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+        }
+
+        .receivedMessage {
+            float: left;
+            margin-top: 10%;
+            background-color: rgb(216, 216, 216);
+            color: black;
+            font-size: xx-large;
+            list-style-type: none;
+            width: 45%;
+            height: 50%;
+            padding-left: 2%;
+        }
+
+        .sentMessage {
+            float: right;
+            background-color: #cc0e0e;
+            width: 45%;
+            height: 50%;
+            text-align: left;
+            font-size:xx-large;
+            color: #fdf9f9;
+            list-style-type: none;
+            margin-bottom: 10%;
+            padding-left: 2%;
+            padding-right: 5%;
+            right: 10%;
+        }
+
+        .messageView {
+            font-family: 'Open Sans';
+            max-height: 90vh;
+            overflow: auto;
+            background: transparent;
+            width: 100%;
+        }
+
+        #messageInput {
+            float: left;
+            left: 1%;
+            border: none; 
+            border-radius: 2rem; 
+            position: sticky;
+            width: 85%;
+            font-size:larger;
+            padding-left: 0.5%;
+            padding-right: 0.5%;
+            padding-top: 0.5%;
+            padding-bottom: 0.5%;
+        }
+
+        .MessageUI {
+            font-family: 'Open Sans';
+            bottom: 0;
+            position: fixed;
+            width: 99%;
+            margin-bottom: 1%;
+        }
+
+        .ipInput {
+            margin-top: 9%;
+            float: left;
+            display: block;
+            border: none;
+            border-radius: 0;
+            border-bottom: 1px solid;
+        }
+
+        #messageInput:focus { outline: none; }
+    </style>
+</head>
+<body> 
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <form id="form">
+                <h3>Introduce la ip a conectar</h1>
+                <input id="ip" type="text" name="host" class="ipInput">
+                <button id="submitButton" type="submit" class="connectBtn">Conectar</button>
+            </form>
+        </div>
+    </div>
+    <div id="sendMessage" class="MessageUI">
+        <form id="messageForm" action="">
+            <input id="messageInput" type="text" autocomplete="off" />
+            <button id="sendMessageBtn" class="sendbtn">Enviar</button>
+        </form>
+    </div>
+    <div class="messageView">
+        <ul id="messages"></ul>
+    </div>
+    
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var modal = document.getElementById("myModal");
+        var messageInput = document.getElementById('messageInput');
+        var messageForm = document.getElementById('messageForm');
+        var messages = document.getElementById('messages');
+
+        //Crear mensaje y concatenarlo a la lista
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log(messageInput.value)
+            var item = document.createElement('li');
+            item.textContent = messageInput.value;
+            item.className = "sentMessage";
+
+            if(messageInput.value == '') {
+                return false;
+            }
+
+            messages.appendChild(item);
+            if(messageInput.value) {
+                fetch('http://localhost:2021/enviar_mensaje', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({ function: 1, data: messageInput.value })
+                }).then((res) => console.log(res)).catch((error) => console.log(error))
+                messageInput.value = '';
+            }
+        });
+
+        //Recibir mensaje y concatenarlo a la lista
+        socket.on('Mensaje ASCP', function(msg) {
+            var item = document.createElement('li');
+            item.textContent = msg.data;
+            item.className = "receivedMessage"
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        // Modal submit button
+        var button = document.getElementById("submitButton");
+        button.onclick = function (e) {
+            console.log('hola desde submitForm')
+            if (e.preventDefault) e.preventDefault();
+
+            var ip = document.getElementById("ip").value;
+            console.log(ip)
+            
+            fetch(`http://localhost:2021/conectar?host=http://${ip}:2021`).then((res) => {
+                console.log(res.json())
+            })
+            
+            modal.style.display = "none";
+
+            return false;
+        }
+
+        modal.style.display = "block";
+
+        // Obtener los mensajes
+        var getMessagesButton = document.getElementById('getMessages').onclick = function() {
+            var messagesList = document.getElementById('messages');
+
+            fetch('http://localhost:2021/mensajes').then((res) => {
+                console.log(res.data)
+            })
+        }
+    </script>
+    
+</body>
+</html>
